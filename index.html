@@ -1,4 +1,4 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>樂理冒險島</title><link rel="stylesheet" href="css/common.css"></head><body><div class="wrap"><h1>🎼 樂理冒險島</h1><p style="text-align:center">選一個模式，開始練習樂理吧！</p>
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>樂理冒險島</title><link rel="stylesheet" href="common.css"></head><body><div class="wrap"><h1>🎼 樂理冒險島</h1><p style="text-align:center">選一個模式，開始練習樂理吧！</p>
 <div class="card row">👤 目前學生：<input id="me" maxlength="8" placeholder="輸入名字（錯題會記在名下）"><span id="todo" class="badge"></span></div>
 <div class="modes">
 <a class="mode" href="monopoly.html"><div class="ic">🎲</div><b>樂理大富翁</b><p>擲骰子環遊音樂島，2～4 人長局，對手答錯還能搶答！</p></a>
@@ -10,9 +10,9 @@
 <a class="mode" href="review.html"><div class="ic">📝</div><b>複習專區</b><p>集中複習答錯的題目，答對就移出錯題本。</p></a>
 </div></div>
 <div id="wk"><div id="wkp" hidden></div><button id="wkb" aria-expanded="false" title="點一下查看各遊戲的練習時間">⏱️ 本週練習 <b id="wkt"></b></button></div>
-<script src="js/store.js"></script><script>(function(){function box(t){var d=document.createElement("div");d.style.cssText="position:fixed;left:0;right:0;top:0;z-index:99999;background:#ffe3e8;color:#7a1630;border-bottom:3px solid #e0577a;padding:10px 14px;font:14px/1.5 sans-serif;white-space:pre-wrap";d.textContent="⚠️ "+t;(document.body||document.documentElement).appendChild(d)}
-var m=[];if(typeof Store==="undefined")m.push("js/store.js");
-if(m.length)box("找不到或無法載入："+m.join("、")+"\n請確認 HTML 旁邊有完整的 js/、css/ 資料夾，並直接雙擊資料夾裡的 index.html 開啟（不要在預覽視窗中開啟）。");
+<script src="store.js"></script><script>(function(){function box(t){var d=document.createElement("div");d.style.cssText="position:fixed;left:0;right:0;top:0;z-index:99999;background:#ffe3e8;color:#7a1630;border-bottom:3px solid #e0577a;padding:10px 14px;font:14px/1.5 sans-serif;white-space:pre-wrap";d.textContent="⚠️ "+t;(document.body||document.documentElement).appendChild(d)}
+var m=[];if(typeof Store==="undefined")m.push("store.js");
+if(m.length)box("找不到或無法載入："+m.join("、")+"\n請確認所有 .js、.css 檔案都和 .html 放在同一層，並直接雙擊資料夾裡的 index.html 開啟（不要在預覽視窗中開啟）。");
 window.addEventListener("error",function(e){box(e.message==="Script error."?"共用 JS 檔執行時出錯（瀏覽器隱藏了細節），請按 F12 查看 Console。":e.message)});
 try{[["QZ",typeof QZ!=="undefined"?QZ:0],["Store",typeof Store!=="undefined"?Store:0],["Snd",typeof Snd!=="undefined"?Snd:0]].forEach(function(p){var o=p[1];if(!o)return;Object.keys(o).forEach(function(k){var f=o[k];if(typeof f==="function")o[k]=function(){try{return f.apply(this,arguments)}catch(e){box(p[0]+"."+k+"："+e.message);throw e}}})})}catch(e){}})()</script><script>
 const me=document.getElementById("me"),td=document.getElementById("todo");if(Store.load().cur)me.value=Store.cur();
