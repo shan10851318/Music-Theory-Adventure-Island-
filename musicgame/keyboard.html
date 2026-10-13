@@ -1,0 +1,32 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>鍵盤與五線譜互動</title><link rel="stylesheet" href="css/common.css"></head><body><div class="wrap"><div class="top"><a href="index.html">🏠 模式選擇</a><h1>🎹 鍵盤與五線譜</h1><span class="badge" id="who"></span></div><div class="card row"><button class="pri" data-m="k">看譜點琴鍵</button><button data-m="p">看音名點譜位置</button><span>｜</span><button class="pri" data-c="treble">高音譜表</button><button data-c="bass">低音譜表</button><span class="badge" id="sc"></span></div>
+<div class="card"><div id="ask" class="qt"></div><div id="st"></div><div class="kb" id="kb"></div><div id="msg" class="exp" hidden></div></div><div id="nxw"></div></div><script src="js/bank.js"></script><script src="js/store.js"></script><script src="js/engine.js"></script><script>if(typeof Track!=="undefined")Track.start("keyboard")</script><script>(function(){function box(t){var d=document.createElement("div");d.style.cssText="position:fixed;left:0;right:0;top:0;z-index:99999;background:#ffe3e8;color:#7a1630;border-bottom:3px solid #e0577a;padding:10px 14px;font:14px/1.5 sans-serif;white-space:pre-wrap";d.textContent="⚠️ "+t;(document.body||document.documentElement).appendChild(d)}
+var m=[];if(typeof Store==="undefined")m.push("js/store.js");if(typeof questions==="undefined")m.push("js/bank.js");if(typeof QZ==="undefined")m.push("js/engine.js");
+if(m.length)box("找不到或無法載入："+m.join("、")+"\n請確認 HTML 旁邊有完整的 js/、css/ 資料夾，並直接雙擊資料夾裡的 index.html 開啟（不要在預覽視窗中開啟）。");
+window.addEventListener("error",function(e){box(e.message==="Script error."?"共用 JS 檔執行時出錯（瀏覽器隱藏了細節），請按 F12 查看 Console。":e.message)});
+try{[["QZ",typeof QZ!=="undefined"?QZ:0],["Store",typeof Store!=="undefined"?Store:0],["Snd",typeof Snd!=="undefined"?Snd:0]].forEach(function(p){var o=p[1];if(!o)return;Object.keys(o).forEach(function(k){var f=o[k];if(typeof f==="function")o[k]=function(){try{return f.apply(this,arguments)}catch(e){box(p[0]+"."+k+"："+e.message);throw e}}})})}catch(e){}})()</script><script>const $=id=>document.getElementById(id);$("who").textContent="👤 "+Store.cur();
+const N=["C","D","E","F","G","A","B"],nm=d=>N[(d%7+7)%7]+(4+Math.floor(d/7));
+let clef="treble",mode="k",sc=0,n=0,q,d,bl,lk;
+const cn=()=>clef==="bass"?"低音":"高音",Y=x=>86-(x-bl)*7;
+function pos(x){const o=x-bl;if(o===-2)return"下加一線";if(o===-1)return"下方第一間";if(o===9)return"上方第一間";if(o===10)return"上加一線";return o%2===0?`第 ${o/2+1} 線`:`第 ${(o+1)/2} 間`}
+function opts(f){const ds=[d];while(ds.length<4){const x=bl-2+Math.random()*13|0;if(!ds.includes(x))ds.push(x)}const o=ds.map(f).sort(()=>Math.random()-.5);return{a:o,c:o.indexOf(f(d))}}
+function draw(notes,hit){const L=o=>`<path d="M214 ${Y(bl+o)}H246" stroke="#493f5e" stroke-width="2"/>`;
+ const nt=notes.map(({d:x,c})=>{const o=x-bl,y=Y(x);let s="";if(o<=-2)for(let k=-2;k>=o;k-=2)s+=L(k);if(o>=10)for(let k=10;k<=o;k+=2)s+=L(k);
+  return s+`<ellipse cx="230" cy="${y}" rx="9" ry="6.5" fill="${c}" transform="rotate(-15 230 ${y})"/><path d="${o>=4?`M221 ${y}v40`:`M239 ${y}v-40`}" stroke="${c}" stroke-width="2.5"/>`}).join("");
+ const hs=hit?Array.from({length:13},(_,i)=>{const x=bl-2+i;return`<g class="hit" data-d="${x}"><rect x="70" y="${Y(x)-3.5}" width="330" height="7" fill="transparent"/><ellipse class="gh" cx="230" cy="${Y(x)}" rx="9" ry="6.5" fill="#6d59cb" opacity="0"/></g>`}).join(""):"";
+ $("st").innerHTML=`<svg viewBox="0 0 420 140" style="width:100%;max-width:520px;display:block;margin:auto">${[30,44,58,72,86].map(y=>`<path d="M24 ${y}H396" stroke="#8c7fb3" stroke-width="1.6"/>`).join("")}${clefSvg(clef,26,86,14)}${nt}${hs}</svg>`;
+ $("st").querySelectorAll(".hit").forEach(g=>g.onclick=()=>judge(+g.dataset.d))}
+function drawKeys(){const a=Math.floor((bl-2)/7)*7,b=Math.ceil((bl+11)/7)*7-1;let h="";for(let x=a;x<=b;x++)h+=`<button class="wk" data-d="${x}">${(x%7+7)%7===0?nm(x):""}${[0,1,3,4,5].includes((x%7+7)%7)&&x<b?"<i></i>":""}</button>`;
+ $("kb").innerHTML=h;$("kb").querySelectorAll(".wk").forEach(k=>k.onclick=()=>judge(+k.dataset.d))}
+const info=()=>$("sc").textContent=`答對 ${sc} / ${n}`;
+function next(){$("nxw").innerHTML="";$("msg").hidden=true;lk=0;bl=clef==="bass"?-10:2;d=bl-2+Math.random()*13|0;const k=mode==="k";
+ q={q:k?`${cn()}譜表${pos(d)}的音是？`:`${cn()}譜表上的 ${nm(d)} 在哪個位置？`,...opts(k?nm:pos),e:`${nm(d)} 在${cn()}譜表的${pos(d)}。（中央 C = C4）`,t:"五線譜",l:1};
+ $("ask").innerHTML=k?"🎼 看譜，點下對應的琴鍵":`🎼 請在譜上點出 <b>${nm(d)}</b> 的位置（中央 C = C4）`;
+ draw(k?[{d,c:"#493f5e"}]:[],!k);if(k)drawKeys();else $("kb").innerHTML="";info()}
+function judge(x){if(lk)return;lk=1;const ok=x===d;n++;if(ok)sc++;else Store.wrong(q);info();
+ if(mode==="k")[...$("kb").children].forEach(b=>{if(+b.dataset.d===d)b.classList.add("ok");else if(!ok&&+b.dataset.d===x)b.classList.add("no")});
+ else draw([{d,c:"#2fa05f"},...(ok?[]:[{d:x,c:"#e0577a"}])],false);
+ $("msg").hidden=false;$("msg").innerHTML=`${ok?"🎉 答對了！":"💫 再接再厲！"} ${q.e}`;$("nxw").innerHTML='<button class="pri" id="nx">下一題 ▶</button>';$("nx").onclick=next}
+const tog=(a,v)=>document.querySelectorAll(`[data-${a}]`).forEach(b=>b.className=b.dataset[a]===v?"pri":"");
+document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{mode=b.dataset.m;tog("m",mode);sc=n=0;next()});
+document.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{clef=b.dataset.c;tog("c",clef);sc=n=0;next()});
+next();</script></body></html>

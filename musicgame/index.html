@@ -1,0 +1,25 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>樂理冒險島</title><link rel="stylesheet" href="css/common.css"></head><body><div class="wrap"><h1>🎼 樂理冒險島</h1><p style="text-align:center">選一個模式，開始練習樂理吧！</p>
+<div class="card row">👤 目前學生：<input id="me" maxlength="8" placeholder="輸入名字（錯題會記在名下）"><span id="todo" class="badge"></span></div>
+<div class="modes">
+<a class="mode" href="monopoly.html"><div class="ic">🎲</div><b>樂理大富翁</b><p>擲骰子環遊音樂島，2～4 人長局，對手答錯還能搶答！</p></a>
+<a class="mode" href="arena.html"><div class="ic">⚡</div><b>搶答擂台</b><p>多隊按鈴搶答，答得越快分數越高，適合課堂分組。</p></a>
+<a class="mode" href="ear.html"><div class="ic">👂</div><b>聽音練習</b><p>聽單音、音程、和弦、音階、節奏、大小調、升降音與選樂譜，單人練習。</p></a>
+<a class="mode" href="keyboard.html"><div class="ic">🎹</div><b>鍵盤與五線譜互動</b><p>看譜點琴鍵，或看音名在譜上點出位置。</p></a>
+<a class="mode" href="survival.html"><div class="ic">🧠</div><b>連對挑戰</b><p>答錯三次就結束，挑戰你的最高連對紀錄。</p></a>
+<a class="mode" href="memory.html"><div class="ic">🃏</div><b>記憶配對</b><p>翻牌配對音符時值、唱名與音名，適合入門。</p></a>
+<a class="mode" href="review.html"><div class="ic">📝</div><b>複習專區</b><p>集中複習答錯的題目，答對就移出錯題本。</p></a>
+</div></div>
+<div id="wk"><div id="wkp" hidden></div><button id="wkb" aria-expanded="false" title="點一下查看各遊戲的練習時間">⏱️ 本週練習 <b id="wkt"></b></button></div>
+<script src="js/store.js"></script><script>(function(){function box(t){var d=document.createElement("div");d.style.cssText="position:fixed;left:0;right:0;top:0;z-index:99999;background:#ffe3e8;color:#7a1630;border-bottom:3px solid #e0577a;padding:10px 14px;font:14px/1.5 sans-serif;white-space:pre-wrap";d.textContent="⚠️ "+t;(document.body||document.documentElement).appendChild(d)}
+var m=[];if(typeof Store==="undefined")m.push("js/store.js");
+if(m.length)box("找不到或無法載入："+m.join("、")+"\n請確認 HTML 旁邊有完整的 js/、css/ 資料夾，並直接雙擊資料夾裡的 index.html 開啟（不要在預覽視窗中開啟）。");
+window.addEventListener("error",function(e){box(e.message==="Script error."?"共用 JS 檔執行時出錯（瀏覽器隱藏了細節），請按 F12 查看 Console。":e.message)});
+try{[["QZ",typeof QZ!=="undefined"?QZ:0],["Store",typeof Store!=="undefined"?Store:0],["Snd",typeof Snd!=="undefined"?Snd:0]].forEach(function(p){var o=p[1];if(!o)return;Object.keys(o).forEach(function(k){var f=o[k];if(typeof f==="function")o[k]=function(){try{return f.apply(this,arguments)}catch(e){box(p[0]+"."+k+"："+e.message);throw e}}})})}catch(e){}})()</script><script>
+const me=document.getElementById("me"),td=document.getElementById("todo");if(Store.load().cur)me.value=Store.cur();
+const up=()=>td.textContent="📝 待複習 "+Store.list().length+" 題";up();
+const fmt=s=>s<60?(s>0?"不到 1 分鐘":"0 分鐘"):s<3600?Math.round(s/60)+" 分鐘":Math.floor(s/3600)+" 小時 "+Math.round(s%3600/60)+" 分";
+function rdr(){const t=Track.week(),tot=Object.values(t).reduce((a,b)=>a+b,0),mx=Math.max(1,...Object.values(t)),m=new Date(Track.wk()+"T00:00"),e=new Date(m);e.setDate(e.getDate()+6);
+ document.getElementById("wkt").textContent=fmt(tot);
+ document.getElementById("wkp").innerHTML=`<h4>本週（${m.getMonth()+1}/${m.getDate()} ～ ${e.getMonth()+1}/${e.getDate()}）各遊戲練習時間</h4>`+Object.entries(Track.names).map(([k,n])=>`<div class="wr"><span>${n}</span><div class="bar"><i style="width:${(t[k]||0)/mx*100}%"></i></div><b>${t[k]?fmt(t[k]):"—"}</b></div>`).join("")+`<p class="wn">👤 ${Store.cur()}　只計算畫面開著且有操作的時間，每週一重新計算。</p>`}
+document.getElementById("wkb").onclick=()=>{const p=document.getElementById("wkp");p.hidden=!p.hidden;document.getElementById("wkb").setAttribute("aria-expanded",!p.hidden);rdr()};
+me.oninput=()=>{Store.setCur(me.value);up();rdr()};rdr();</script></body></html>

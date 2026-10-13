@@ -1,0 +1,111 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>聽音練習</title><link rel="stylesheet" href="css/common.css"></head><body><div class="wrap"><div class="top"><a href="index.html">🏠 模式選擇</a><h1>👂 聽音練習</h1><span class="badge" id="who"></span></div><div class="card"><div class="row"><button class="pri" data-k="note">聽單音</button><button data-k="iv">聽音程</button><button data-k="ch">聽和弦</button><button data-k="sc">聽音階</button><button data-k="rh">聽節奏</button><button data-k="dir">聽旋律走向</button><button data-k="mm">聽大小調</button><button data-k="ac">辨認升降音</button><button data-k="ms">聽旋律選樂譜</button></div><div class="row" style="margin-top:10px"><label id="subw" hidden>題型 <select id="sub"></select></label><label id="lvw">難度 <select id="lv"><option value="1">基礎</option><option value="2">進階</option></select></label><label id="refw"><input type="checkbox" id="ref" checked> 先播放參考音 C</label><span class="badge" id="score"></span></div></div><div class="card" id="notePanel"><div class="row"><label>最低音 <select id="lo"></select></label><label>最高音 <select id="hi"></select></label><span class="badge" id="rangeInfo"></span></div></div>
+<div class="card" id="rhPanel" hidden><div class="row"><label><input type="checkbox" id="beat" checked> 加入輕聲拍點（比較容易聽）</label><span class="badge" id="rpc"></span></div>
+<p style="margin:10px 0 4px"><b>拍號</b>（可複選）</p><div class="row" id="meters"></div>
+<p style="margin:10px 0 4px"><b>要使用的音符與休止符</b>（點選圖案開關）</p><div class="rpg" id="notes"></div><div class="row" id="presets" style="margin:8px 0"></div>
+<p style="margin:10px 0 4px"><b>切分節奏</b></p><div class="row"><select id="syn"><option value="0">不限（有符合的就可能出現）</option><option value="1">只出切分節奏</option><option value="2">不出切分節奏</option></select></div></div>
+<div class="card" id="keyPanel" hidden><p style="margin:0 0 6px"><b>調性</b>（可複選，題目會從選到的調性中隨機出題）</p><div class="row" id="keyPre" style="margin-bottom:8px"></div><p style="margin:6px 0 4px">大調</p><div class="row" id="kmaj"></div><p style="margin:8px 0 4px">小調（自然小調）</p><div class="row" id="kmin"></div></div>
+<div class="card" id="q"></div><div id="nxw"></div></div><script src="js/bank.js"></script><script src="js/store.js"></script><script src="js/engine.js"></script><script src="js/audio.js"></script><script>if(typeof Track!=="undefined")Track.start("ear")</script><script>(function(){function box(t){var d=document.createElement("div");d.style.cssText="position:fixed;left:0;right:0;top:0;z-index:99999;background:#ffe3e8;color:#7a1630;border-bottom:3px solid #e0577a;padding:10px 14px;font:14px/1.5 sans-serif;white-space:pre-wrap";d.textContent="⚠️ "+t;(document.body||document.documentElement).appendChild(d)}
+var m=[];if(typeof Store==="undefined")m.push("js/store.js");if(typeof questions==="undefined")m.push("js/bank.js");if(typeof QZ==="undefined")m.push("js/engine.js");if(typeof Snd==="undefined")m.push("js/audio.js");
+if(m.length)box("找不到或無法載入："+m.join("、")+"\n請確認 HTML 旁邊有完整的 js/、css/ 資料夾，並直接雙擊資料夾裡的 index.html 開啟（不要在預覽視窗中開啟）。");
+window.addEventListener("error",function(e){box(e.message==="Script error."?"共用 JS 檔執行時出錯（瀏覽器隱藏了細節），請按 F12 查看 Console。":e.message)});
+try{[["QZ",typeof QZ!=="undefined"?QZ:0],["Store",typeof Store!=="undefined"?Store:0],["Snd",typeof Snd!=="undefined"?Snd:0]].forEach(function(p){var o=p[1];if(!o)return;Object.keys(o).forEach(function(k){var f=o[k];if(typeof f==="function")o[k]=function(){try{return f.apply(this,arguments)}catch(e){box(p[0]+"."+k+"："+e.message);throw e}}})})}catch(e){}})()</script><script>const $=id=>document.getElementById(id);$("who").textContent="👤 "+Store.cur();
+const NN=["C（Do）","C♯／D♭","D（Re）","D♯／E♭","E（Mi）","F（Fa）","F♯／G♭","G（Sol）","G♯／A♭","A（La）","A♯／B♭","B（Si）"];
+const IVL=[[1,"小二度"],[2,"大二度"],[3,"小三度"],[4,"大三度"],[5,"純四度"],[6,"增四度（三全音）"],[7,"純五度"],[8,"小六度"],[9,"大六度"],[10,"小七度"],[11,"大七度"],[12,"純八度"]],BASIC=[1,3,4,6,8,11];
+const CHL=[["大三和弦","大"],["小三和弦","小"],["減三和弦","減"],["增三和弦","增"],["屬七和弦","屬七"],["大七和弦","大七"],["小七和弦","小七"],["掛四和弦","掛四"]];
+const SCL=[["大調音階","大調"],["自然小調音階","自然小調"],["和聲小調音階","和聲小調"],["五聲音階","五聲"]];
+const TK={w:[4,"全音符"],de:[.75,"附點八分音符"],dh:[3,"附點二分音符"],h:[2,"二分音符"],dq:[1.5,"附點四分音符"],q:[1,"四分音符"],e:[.5,"八分音符"],s:[.25,"十六分音符"],hr:[-2,"二分休止符"],qr:[-1,"四分休止符"],er:[-.5,"八分休止符"]};
+const PATS=["q q q q", "q q e e q", "h q q", "e e e e q q", "q e e q q", "q q h", "w", "q qr q q", "q q q qr", "q er e q q", "h hr", "q hr q", "dq e q q", "e q e q q", "dq e dq e", "dh q", "s s s s q q q", "e e s s s s q q", "q q q", "h q", "q h", "q e e q", "dh", "q qr q", "e e e e q", "q q", "e e q", "q e e", "h", "e e e e", "e q q e q", "q e q e q", "e q e q e e", "e q q q e", "e h e q", "e h q e", "q e h e", "h e q e", "h e e q", "e e h q", "dq e q e e", "dq dq q", "dq dq e e", "dq q q e", "q dq dq", "dh e e", "q q e e e e", "q e e e e q", "e e q e e q", "q q q er e", "qr q q q", "qr q h", "qr e e q q", "er e q er e q", "er e er e q q", "hr q q", "q q hr", "h qr q", "s s e q q q", "q s s e q q", "s s s s s s s s q q", "de s q q q", "s e s q q q", "q q e e", "e e q q", "e e e e e e", "q e q e", "e q e q", "dq e q", "dq dq", "q dq e", "h e e", "e e h", "qr q q", "q q qr", "e q q e", "er e q q", "q qr", "qr q", "e q e", "dq e", "er e q", "s s s s e e", "s s e q", "de s q", "q s e s q q", "q q s e s q", "q q q s e s", "s e s s e s q q", "s e s e e q q", "e e s e s q q", "s e s q s e s q", "s e s h q", "q s e s h", "s e s dq e q", "s de q q q", "q s de q q", "q q s de q", "s de s de q q", "s e s qr q q", "er e s e s q q", "s e s s e s", "s e s e e", "s e s q", "s de q", "q s e s", "s e s er e", "s e s q q", "q s e s q", "q q s e s", "s e s s e s q", "s de q q"];
+/* 節奏圖案（SVG 手繪音符與休止符） */
+function rhSvg(str){const it=str.split(" "),WD={w:56,dh:50,h:44,dq:40,de:40},ink="#493f5e";let xx=12;const cx=it.map(k=>{const w=WD[k]||34,c=xx+w/2;xx+=w;return c}),W=xx+8;
+ let s=`<path d="M2 44H${W-2}" stroke="#b9acd9" stroke-width="1.5"/>`,i=0;
+ const head=(c,fill,rx=6.8)=>`<ellipse cx="${c}" cy="44" rx="${rx}" ry="4.8" transform="rotate(-20 ${c} 44)" fill="${fill?ink:"#fff"}" stroke="${ink}" stroke-width="2"/>`;
+ const stem=c=>`<path d="M${c+6.2} 44V12" stroke="${ink}" stroke-width="2"/>`;
+ while(i<it.length){const k=it[i],c=cx[i];
+  if(k==="e"&&it[i+1]==="e"){const d=cx[i+1];s+=head(c,1)+stem(c)+head(d,1)+stem(d)+`<path d="M${c+6.2} 13H${d+6.2}" stroke="${ink}" stroke-width="5"/>`;i+=2;continue}
+  if(k==="s"&&it.slice(i,i+4).join("")==="ssss"){const d=cx[i+3];for(let j=0;j<4;j++)s+=head(cx[i+j],1)+stem(cx[i+j]);s+=`<path d="M${c+6.2} 13H${d+6.2}M${c+6.2} 21H${d+6.2}" stroke="${ink}" stroke-width="4"/>`;i+=4;continue}
+  if(k==="s"&&it[i+1]==="e"&&it[i+2]==="s"){const d=cx[i+1],f=cx[i+2];s+=head(c,1)+stem(c)+head(d,1)+stem(d)+head(f,1)+stem(f)+`<path d="M${c+6.2} 13H${f+6.2}" stroke="${ink}" stroke-width="5"/><path d="M${c+6.2} 21h9M${f-2.8} 21h9" stroke="${ink}" stroke-width="4"/>`;i+=3;continue}
+  if(k==="w")s+=head(c,0,8.5);
+  else if(k==="qr")s+=`<path d="M${c-3} 26L${c+3} 36L${c-3} 46L${c+3} 56Q${c-5} 55 ${c-3} 64" fill="none" stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+  else if(k==="er")s+=`<circle cx="${c-3}" cy="38" r="3" fill="${ink}"/><path d="M${c-1} 40Q${c+4} 38 ${c+5} 34L${c-4} 58" fill="none" stroke="${ink}" stroke-width="2.4" stroke-linecap="round"/>`;
+  else if(k==="hr")s+=`<rect x="${c-8}" y="38" width="16" height="6" fill="${ink}"/>`;
+  else{const f=k==="h"||k==="dh";s+=head(c,!f)+stem(c);if(k==="e"||k==="de")s+=`<path d="M${c+6.2} 12q10 6 8 18" fill="none" stroke="${ink}" stroke-width="2.6" stroke-linecap="round"/>`;if(k==="s")s+=`<path d="M${c+6.2} 12q10 6 8 16M${c+6.2} 20q10 6 8 16" fill="none" stroke="${ink}" stroke-width="2.4" stroke-linecap="round"/>`;if(k==="dq"||k==="dh"||k==="de")s+=`<circle cx="${c+13}" cy="39" r="2.2" fill="${ink}"/>`}
+  i++}
+ return `<svg class="rsvg" viewBox="0 6 ${W} 62" xmlns="http://www.w3.org/2000/svg">${s}</svg>`}
+const WH=[0,2,4,5,7,9,11],PCW=["C","","D","","E","F","","G","","A","","B"],PCS=["Do","","Re","","Mi","Fa","","Sol","","La","","Si"],PCB=["","C♯","","D♯","","","F♯","","G♯","","A♯",""],PCF=["","D♭","","E♭","","","G♭","","A♭","","B♭",""];
+const nlab=m=>{const p=m%12,o=Math.floor(m/12)-1;return PCW[p]?`${PCW[p]}${o}（${PCS[p]}）`:`${PCB[p]}${o}／${PCF[p]}${o}`};
+const NOTE_ICONS=["w","dh","h","dq","q","de","e","s","hr","qr","er"],TS=new Set(["q","e","h"]),MS=new Set([4]);let empty=false,SYN=0,over=false;
+const du=x=>x.split(" ").reduce((a,k)=>a+Math.abs(TK[k][0]),0);
+function isSync(str){let x=0;for(const k of str.split(" ")){const d=TK[k][0],L=Math.abs(d);if(d>0&&x%1!==0&&(Math.floor(x+L-1e-9)>Math.floor(x)||(x%.5!==0&&L>=.5)))return true;x+=L}return false}
+const pool=()=>PATS.map((_,i)=>i).filter(i=>{const p=PATS[i];return p.split(" ").every(k=>TS.has(k))&&MS.has(du(p))&&(SYN===0||(SYN===1)===isSync(p))});
+const DR=[["上行",[0,2,4,7]],["下行",[7,4,2,0]],["同音反覆",[0,0,0,0]],["先上後下",[0,4,7,4]],["先下後上",[7,3,0,4]]];
+let kind="note",sc=0,n=0,q,ctl;const TOTAL=10;const rnd=k=>Math.random()*k|0;
+function mk(txt,all,ci,e,snd){const w=all.map((_,i)=>i).filter(i=>i!==ci).sort(()=>Math.random()-.5).slice(0,3),o=[ci,...w].sort(()=>Math.random()-.5);return{q:txt,a:o.map(i=>all[i]),c:o.indexOf(ci),e,t:"聽音",l:1,snd}}
+const SUBS={iv:["辨認音程","協和或不協和","上行或下行","哪個音程比較大"],ch:["辨認和弦種類","辨認轉位","琶音（分解和弦）","明亮或暗沉（大小三和弦）"],sc:["辨認音階","辨認調式","音階上行或下行"],mm:["混合","聽和弦","聽音階","聽短旋律"]};
+const SCL2=[["大調音階","大調"],["自然小調音階","自然小調"],["和聲小調音階","和聲小調"],["五聲音階","五聲"],["藍調音階","藍調"],["全音階","全音"],["半音階","半音"]],MODES=[["大調（伊奧尼亞）","大調"],["多利安調式","多利安"],["弗里吉亞調式","弗里吉亞"],["利底亞調式","利底亞"],["混合利底亞調式","混合利底亞"],["自然小調（愛奧利亞）","自然小調"]];
+const CON=[3,4,7,8,9,12],DIS=[1,2,10,11,6],CM=[0,2,4,5,7,9,11],NM=["C","D","E","F","G","A","B"],SO=["Do","Re","Mi","Fa","Sol","La","Si"];
+const KEYS=[["C 大調",0,60,0,0,0],["G 大調",4,67,1,0,0],["D 大調",1,62,2,0,0],["A 大調",5,69,3,0,0],["E 大調",2,64,4,0,0],["B 大調",6,71,5,0,0],["F 大調",3,65,0,1,0],["B♭ 大調",6,70,0,2,0],["E♭ 大調",2,63,0,3,0],["A♭ 大調",5,68,0,4,0],["a 小調",5,69,0,0,1],["e 小調",2,64,1,0,1],["b 小調",6,71,2,0,1],["f♯ 小調",3,66,3,0,1],["c♯ 小調",0,61,4,0,1],["d 小調",1,62,0,1,1],["g 小調",4,67,0,2,1],["c 小調",0,60,0,3,1],["f 小調",3,65,0,4,1]].map(k=>({n:k[0],L:k[1],t:k[2],s:k[3],f:k[4],m:k[5]}));
+const KSH=["F","C","G","D","A","E","B"],KFL=["B","E","A","D","G","C","F"],KSHD=[10,7,11,8,5,9,6],KFLD=[6,9,5,8,4,7,3],KMAJ=[0,2,4,5,7,9,11],KMIN=[0,2,3,5,7,8,10],KS=new Set([0]);
+const nname=(d,K)=>{const l=NM[d%7];return l+(K.s&&KSH.slice(0,K.s).includes(l)?"♯":K.f&&KFL.slice(0,K.f).includes(l)?"♭":"")};
+const kpitch=(d,K)=>{const g=d-K.L;return K.t+12*Math.floor(g/7)+(K.m?KMIN:KMAJ)[((g%7)+7)%7]};
+function melSvg(ds,K){K=K||KEYS[0];const bl=2,Y=d=>86-(d-bl)*7,xs=[122,158,194,230],ink="#493f5e";let s=[30,44,58,72,86].map(y=>`<path d="M6 ${y}H258" stroke="#8c7fb3" stroke-width="1.4"/>`).join("")+clefSvg("treble",10,86,14);
+ for(let i=0;i<K.s;i++){const x=64+i*9,y=Y(KSHD[i]);s+=`<path d="M${x-2} ${y-9}v18M${x+2} ${y-10}v18" stroke="${ink}" stroke-width="1.3"/><path d="M${x-5} ${y-2.5}l10 -3M${x-5} ${y+3.5}l10 -3" stroke="${ink}" stroke-width="2.4"/>`}
+ for(let i=0;i<K.f;i++){const x=66+i*9,y=Y(KFLD[i]);s+=`<path d="M${x-2} ${y-12}V${y+4}" stroke="${ink}" stroke-width="1.7" fill="none"/><path d="M${x-2} ${y+4}C${x+7} ${y+1} ${x+8} ${y-6} ${x-2} ${y-4}" stroke="${ink}" stroke-width="1.7" fill="none"/>`}
+ ds.forEach((d,i)=>{const x=xs[i],y=Y(d),o=d-bl;let l="";if(o<=-2)for(let k=-2;k>=o;k-=2)l+=`<path d="M${x-12} ${Y(bl+k)}H${x+12}" stroke="${ink}" stroke-width="1.6"/>`;if(o>=10)for(let k=10;k<=o;k+=2)l+=`<path d="M${x-12} ${Y(bl+k)}H${x+12}" stroke="${ink}" stroke-width="1.6"/>`;
+  s+=l+`<ellipse cx="${x}" cy="${y}" rx="6.8" ry="4.8" transform="rotate(-20 ${x} ${y})" fill="${ink}"/><path d="${o>=4?`M${x-6.2} ${y}v32`:`M${x+6.2} ${y}v-32`}" stroke="${ink}" stroke-width="2"/>`});
+ return `<svg class="rsvg" style="height:104px" viewBox="0 4 264 118" xmlns="http://www.w3.org/2000/svg">${s}</svg>`}
+function gen(){const lv=+$("lv").value,root=55+rnd(12),sub=+$("sub").value||0;
+ if(kind==="note"){let a=+$("lo").value,b=+$("hi").value;if(a>b)[a,b]=[b,a];if(b-a<7)b=a+7;const P=[];for(let m=a;m<=b;m++)if(lv===2||WH.includes(m%12))P.push(m);const m=P[rnd(P.length)],ref=$("ref").checked;$("rangeInfo").textContent=`音域 ${nlab(a).split("（")[0]}～${nlab(b).split("（")[0]}，共 ${P.length} 個音`;return mk("🔊 這個音是哪一個音？"+(ref?"（先播放參考音：中央 C，再播放目標音）":""),P.map(nlab),P.indexOf(m),`這個音是 ${nlab(m)}。`,{k:"note",m,ref})}
+ if(kind==="iv"){
+  if(sub===1){const dis=Math.random()<.5,S=dis?DIS:CON,semi=S[rnd(S.length)];return mk("🔊 這個音程聽起來是協和還是不協和？",["協和（和諧、穩定）","不協和（緊張、想解決）"],dis?1:0,`${IVL[semi-1][1]}（${semi} 個半音）是${dis?"不協和":"協和"}音程。`,{k:"iv",root,semi,dir:["up","down","har"][rnd(3)]})}
+  if(sub===2){const semi=1+rnd(12),dn=Math.random()<.5;return mk("🔊 這兩個音是上行還是下行？",["上行（先低後高）","下行（先高後低）"],dn?1:0,`第二個音比第一個音${dn?"低":"高"}，相距 ${semi} 個半音。`,{k:"iv",root,semi:dn?-semi:semi,dir:"up"})}
+  if(sub===3){const L=lv===1?BASIC:IVL.map((_,i)=>i),a=L[rnd(L.length)],b=Math.random()<.15?a:L[rnd(L.length)],sa=IVL[a][0],sb=IVL[b][0];return mk("🔊 先聽第一個音程，再聽第二個音程，哪一個比較大？",["第一個比較大","第二個比較大","一樣大"],sa>sb?0:sb>sa?1:2,`第一個是${IVL[a][1]}（${sa} 個半音），第二個是${IVL[b][1]}（${sb} 個半音）。`,{k:"iv2",root,a:sa,b:sb})}
+  const L=lv===1?BASIC:IVL.map((_,i)=>i),i=L[rnd(L.length)],dir=lv===1?"up":["up","down","har"][rnd(3)],lab={up:"（先低後高）",down:"（先高後低）",har:"（同時播放）"}[dir];return mk("🔊 這兩個音相距什麼音程？"+lab,L.map(x=>IVL[x][1]),L.indexOf(i),`相距 ${IVL[i][0]} 個半音，是${IVL[i][1]}。`,{k:"iv",root,semi:IVL[i][0],dir})}
+ if(kind==="ch"){
+  if(sub===1){const T=Math.random()<.5?["大","大三和弦"]:["小","小三和弦"],inv=rnd(3),nm=["原位（根音在最低）","第一轉位（三音在最低）","第二轉位（五音在最低）"];return mk(`🔊 這個${T[1]}是原位還是轉位？`,nm,inv,`這是${T[1]}的${nm[inv]}。`,{k:"ch",root:root-5,type:T[0],inv})}
+  if(sub===3){const mj=Math.random()<.5;return mk("🔊 這個三和弦聽起來是明亮還是暗沉？",["大三和弦（明亮）","小三和弦（暗沉）"],mj?0:1,`這是${mj?"大":"小"}三和弦，${mj?"聽起來明亮":"聽起來柔和暗沉"}。`,{k:"ch",root,type:mj?"大":"小",arp:Math.random()<.5?"up":undefined})}
+  const L=lv===1&&sub===0?CHL.slice(0,4):CHL,i=rnd(L.length),arp=sub===2?["up","down"][rnd(2)]:(lv===2?[undefined,"up","down"][rnd(3)]:undefined);return mk("🔊 這是什麼和弦？"+(arp?(arp==="up"?"（琶音，由低到高）":"（琶音，由高到低）"):""),L.map(x=>x[0]),i,`這是${L[i][0]}。`,{k:"ch",root,type:L[i][1],arp})}
+ if(kind==="sc"){
+  if(sub===1){const i=rnd(6),w=[0,1,2,3,4,5].filter(x=>x!==i).sort(()=>Math.random()-.5).slice(0,3),o=[i,...w].sort(()=>Math.random()-.5);return{q:"🔊 這是哪一種調式？",a:o.map(x=>MODES[x][0]),c:o.indexOf(i),e:`這是${MODES[i][0]}。`,t:"聽音",l:1,snd:{k:"sc",root,type:MODES[i][1]}}}
+  if(sub===2){const dn=Math.random()<.5;return mk("🔊 這個音階是上行還是下行？",["上行","下行"],dn?1:0,`這個音階是${dn?"下行":"上行"}。`,{k:"sc",root,type:["大調","自然小調"][rnd(2)],dir:dn?"down":"up"})}
+  const L=lv===1?SCL.slice(0,3):SCL2,i=rnd(L.length);return mk("🔊 這是哪一種音階？",L.map(x=>x[0]),i,`這是${L[i][0]}。`,{k:"sc",root,type:L[i][1]})}
+ if(kind==="mm"){const mj=Math.random()<.5,t=sub||1+rnd(3);let snd,how;
+  if(t===1){snd={k:"ch",root,type:mj?"大":"小"};how="和弦"}else if(t===2){snd={k:"sc",root,type:mj?"大調":["自然小調","和聲小調"][rnd(2)]};how="音階"}else{snd={k:"mel",notes:(mj?[0,4,7,12,7,4]:[0,3,7,12,7,3]).map(x=>root+x),dur:.45};how="短旋律"}
+  return mk(`🔊 這段${how}是大調還是小調？`,["大調（明亮）","小調（暗沉）"],mj?0:1,`這段${how}是${mj?"大":"小"}調。大調聽起來較明亮，小調較柔和暗沉。`,snd)}
+ if(kind==="ac"){const S=lv===1?[0,1,-1]:[0,1,-1,2,-2],semi=S[rnd(S.length)],lab={0:"相同的音",1:"升高半音（♯）","-1":"降低半音（♭）",2:"升高全音（兩個半音）","-2":"降低全音（兩個半音）"};return mk("🔊 先聽第一個音，再聽第二個音：第二個音和第一個音相比？",S.map(x=>lab[x]),S.indexOf(semi),`第二個音${semi===0?"和第一個音相同":lab[semi]}。`,{k:"iv",root,semi,dir:"up"})}
+ if(kind==="ms"){const ks=[...KS],K=KEYS[ks[rnd(ks.length)]],st=lv===1?[-2,-1,1,2]:[-4,-3,-2,-1,0,1,2,3,4],mkm=()=>{const ds=[rnd(8)];while(ds.length<4){const nd=ds[ds.length-1]+st[rnd(st.length)];if(nd>=0&&nd<=12)ds.push(nd)}return ds},base=mkm(),key=x=>x.join(),opts=[base],seen=new Set([key(base)]);let g=0;
+  while(opts.length<4&&g++<300){const v=base.slice(),c=1+rnd(2);for(let k=0;k<c;k++){const j=rnd(4);v[j]=Math.max(0,Math.min(12,v[j]+[-2,-1,1,2][rnd(4)]))}if(!seen.has(key(v))){seen.add(key(v));opts.push(v)}}
+  return mk(`🔊 聽這段旋律（4 個音），選出正確的樂譜（高音譜表，${K.n}）`,opts.map(o=>melSvg(o,K)),0,`旋律是 ${base.map(d=>nname(d,K)).join(" → ")}（${K.n}）。`,{k:"mel",notes:base.map(d=>kpitch(d,K)),dur:.6})}
+ if(kind==="rh"){const ids=pool(),i=ids[rnd(ids.length)],sh=a=>a.sort(()=>Math.random()-.5),oth=ids.filter(j=>j!==i),same=oth.filter(j=>du(PATS[j])===du(PATS[i])),pick3=[...sh(same),...sh(oth.filter(j=>!same.includes(j)))].slice(0,3),beat=$("beat").checked,tk=PATS[i],mt={4:"4/4",3:"3/4",2:"2/4"}[du(tk)];return mk(`🔊 聽到的是哪一個節奏？（${mt} 拍${beat?"，有輕聲拍點":"，無拍點"}）`,[i,...pick3].map(j=>rhSvg(PATS[j])),0,`這個節奏是：${tk.split(" ").map(k=>TK[k][1]).join("、")}${isSync(tk)?"（切分節奏）":""}。`,{k:"rh",pat:tk.split(" ").map(k=>TK[k][0]),beat})}
+ const L=lv===1?DR.slice(0,3):DR,i=rnd(L.length);return mk("🔊 這段旋律的走向是？",L.map(x=>x[0]),i,`這段旋律是${L[i][0]}。`,{k:"dir",notes:L[i][1].map(x=>root+x)})}
+const info=()=>$("score").textContent=`已答 ${n} / ${TOTAL} 題　答對 ${sc} 題`;
+function next(){Snd.stop();if(over){over=false;sc=n=0}$("nxw").innerHTML="";$("refw").hidden=kind!=="note";$("notePanel").hidden=kind!=="note";$("rhPanel").hidden=kind!=="rh";$("keyPanel").hidden=kind!=="ms";$("lvw").hidden=kind==="rh";empty=false;
+ if(kind==="rh"&&pool().length<2){empty=true;cnt();$("q").innerHTML='<div class="exp">符合條件的節奏不足 2 個，請多選幾種音符或拍號。</div>';return}
+ q=gen();ctl=QZ.card($("q"),q,pick);info()}
+const cnt=()=>{const n=pool().length;$("rpc").textContent=`符合條件的節奏：${n} 個`+(n<2?"（至少需要 2 個）":"")};
+function drawUi(){$("meters").innerHTML=[2,3,4].map(m=>`<button data-m="${m}" class="${MS.has(m)?"pri":""}">${m}/4 拍</button>`).join("");
+ $("meters").querySelectorAll("button").forEach(b=>b.onclick=()=>{const m=+b.dataset.m;MS.has(m)?MS.delete(m):MS.add(m);drawUi();ui()});
+ $("notes").innerHTML=NOTE_ICONS.map(k=>`<div class="rp ${TS.has(k)?"on":""}" data-t="${k}">${rhSvg(k)}<span>${TK[k][1]}</span></div>`).join("");
+ $("notes").querySelectorAll(".rp").forEach(l=>l.onclick=()=>{const k=l.dataset.t;TS.has(k)?TS.delete(k):TS.add(k);l.classList.toggle("on");ui()});cnt()}
+const ui=()=>{cnt();if(pool().length>=2&&(empty||kind==="rh"))next();else if(pool().length<2)next()};
+$("presets").innerHTML="快速選擇："+[["入門（四分、八分、二分）",()=>{TS.clear();["q","e","h"].forEach(k=>TS.add(k))}],["＋附點",()=>["dq","dh","de"].forEach(k=>TS.add(k))],["＋休止符",()=>["qr","er","hr"].forEach(k=>TS.add(k))],["＋十六分",()=>TS.add("s")],["＋全音符",()=>TS.add("w")],["全選",()=>NOTE_ICONS.forEach(k=>TS.add(k))]].map((x,i)=>`<button data-i="${i}">${x[0]}</button>`).join("");
+const PRE=[()=>{TS.clear();["q","e","h"].forEach(k=>TS.add(k))},()=>["dq","dh","de"].forEach(k=>TS.add(k)),()=>["qr","er","hr"].forEach(k=>TS.add(k)),()=>TS.add("s"),()=>TS.add("w"),()=>NOTE_ICONS.forEach(k=>TS.add(k))];
+$("presets").querySelectorAll("button").forEach(b=>b.onclick=()=>{PRE[+b.dataset.i]();drawUi();ui()});
+$("syn").onchange=()=>{SYN=+$("syn").value;ui()};
+const wl=[];for(let m=36;m<=96;m++)if(WH.includes(m%12))wl.push(m);["lo","hi"].forEach(id=>{$(id).innerHTML=wl.map(m=>`<option value="${m}">${nlab(m)}${m===60?" 中央 C":""}</option>`).join("");$(id).onchange=next});$("lo").value=60;$("hi").value=71;$("ref").onchange=$("beat").onchange=next;drawUi();
+function pick(i){const ok=i===q.c;n++;ctl.reveal();if(ok)sc++;else{ctl.mark(i,"no");Store.wrong(q)}info();$("nxw").innerHTML=n>=TOTAL?'<button class="pri" id="nx">🎉 查看結果</button>':'<button class="pri" id="nx">下一題 ▶</button>';$("nx").onclick=n>=TOTAL?finish:next}
+const TIERS=[{e:"🏆",m:"滿分！你的耳朵太厲害了，簡直是小小音樂家！",f:["🎊","🎉","⭐","🏆","✨","🎵"],k:44},{e:"🥇",m:"太棒了！只差一題就滿分，再挑戰一次吧！",f:["⭐","🎉","✨","🎵"],k:32},{e:"🥈",m:"很不錯！你的耳朵越來越靈敏，繼續保持！",f:["🎈","⭐","🎵"],k:24},{e:"🥉",m:"還可以喔！多聽幾次就會進步，加油！",f:["🎵","🌟","💪"],k:16},{e:"🌱",m:"沒關係，聽音要慢慢練習，再試一次一定會更好！",f:["🌱","🎵","💗"],k:12}];
+function finish(){Snd.stop();over=true;$("nxw").innerHTML="";const t=TIERS[sc>=10?0:sc>=9?1:sc>=7?2:sc>=4?3:4],st=Math.ceil(sc/2);
+ $("q").innerHTML=`<div class="end"><div class="trophy">${t.e}</div><div class="big">答對 ${sc} / ${TOTAL} 題</div><div class="stars">${"★".repeat(st)}<span>${"★".repeat(5-st)}</span></div><p class="emsg">${t.m}</p>${sc<TOTAL?"<p>答錯的題目已收進「複習專區」。</p>":""}<div class="row" style="justify-content:center"><button class="pri" id="again">🔁 再玩一次</button><a href="review.html"><button>📝 複習專區</button></a><a href="index.html"><button>🏠 回首頁</button></a></div></div>`;
+ $("again").onclick=next;
+ if(!matchMedia("(prefers-reduced-motion: reduce)").matches)for(let i=0;i<t.k;i++){const s=document.createElement("span");s.className="fall";s.textContent=t.f[i%t.f.length];s.style.cssText=`left:${Math.random()*100}vw;animation-duration:${2.4+Math.random()*2.4}s;animation-delay:${Math.random()*1.2}s;font-size:${18+Math.random()*20}px`;document.body.appendChild(s);setTimeout(()=>s.remove(),7000)}}
+document.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{kind=b.dataset.k;setSub();sc=n=0;document.querySelectorAll("[data-k]").forEach(x=>x.className=x===b?"pri":"");next()});
+$("lv").onchange=()=>{sc=n=0;next()};
+function drawKeys(){const f=m=>KEYS.map((K,i)=>[K,i]).filter(x=>x[0].m===m).map(([K,i])=>`<button data-i="${i}" class="${KS.has(i)?"pri":""}">${K.n}${K.s?` ♯×${K.s}`:K.f?` ♭×${K.f}`:""}</button>`).join("");
+ $("kmaj").innerHTML=f(0);$("kmin").innerHTML=f(1);
+ document.querySelectorAll("#kmaj button,#kmin button").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;if(KS.has(i)){if(KS.size>1)KS.delete(i)}else KS.add(i);drawKeys();next()});
+ const P=[["只用 C 大調",K=>K.n==="C 大調"],["一個升降記號以內",K=>K.s+K.f<=1],["全部大調",K=>!K.m],["全部小調",K=>K.m],["全選",()=>true]];
+ $("keyPre").innerHTML="快速選擇："+P.map((p,i)=>`<button data-p="${i}">${p[0]}</button>`).join("");
+ $("keyPre").querySelectorAll("button").forEach(b=>b.onclick=()=>{KS.clear();KEYS.forEach((K,i)=>{if(P[+b.dataset.p][1](K))KS.add(i)});drawKeys();next()})}
+function setSub(){const S=SUBS[kind]||[];$("subw").hidden=!S.length;$("sub").innerHTML=S.map((x,i)=>`<option value="${i}">${x}</option>`).join("")}
+$("sub").onchange=()=>{sc=n=0;next()};setSub();drawKeys();
+next();</script></body></html>
